@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Quartz;
@@ -7,11 +10,11 @@ namespace qtz_test
 {
     public class RepeatAfterCompletionJobListener : IJobListener
     {
-        private readonly TimeSpan interval;
+        private readonly int maxRunCount = 0;
 
-        public RepeatAfterCompletionJobListener(TimeSpan interval)
+        public RepeatAfterCompletionJobListener(int maxRunCount)
         {
-            this.interval = interval;
+            this.maxRunCount = maxRunCount;
         }
 
         public Task JobToBeExecuted(IJobExecutionContext context, CancellationToken cancellationToken = default)
@@ -26,14 +29,21 @@ namespace qtz_test
 
         public async Task JobWasExecuted(IJobExecutionContext context, JobExecutionException jobException, CancellationToken cancellationToken = default)
         {
-            string triggerKey = context.JobDetail.Key.Name + ".trigger";
+            var runCount = context.Trigger.JobDataMap.GetIntValue("count");
+            Console.Out.Write(runCount);
+
+            if (runCount == maxRunCount)
+            {
+                return;
+            }
 
             var trigger = TriggerBuilder.Create()
-                    .WithIdentity(triggerKey, "group1")
-                    .StartAt(DateTimeOffset.Now.AddSeconds(5))
+                    .WithIdentity(context.Trigger.Key.Name, "loadgroup")
+                    .UsingJobData("count", ++runCount)
+                    .StartAt(DateTimeOffset.Now.AddSeconds(5))  
                     .Build();
 
-            await context.Scheduler.RescheduleJob(new TriggerKey(triggerKey), trigger);
+            await context.Scheduler.RescheduleJob(context.Trigger.Key, trigger);
         }
 
         public string Name

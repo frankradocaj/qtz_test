@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Quartz;
 using Quartz.Impl.Matchers;
@@ -12,6 +13,10 @@ namespace qtz_test
             // define the job and tie it to our job class
             var jobDetail = JobBuilder.Create<SimpleJob>()
                 .WithIdentity("immediate started job", "group1")
+                .SetJobData(new JobDataMap
+                {
+                    
+                })
                 .Build();
 
             // Trigger the job to run now, and then every 40 seconds
@@ -53,7 +58,7 @@ namespace qtz_test
         public async Task ScheduleAfterDelay(IScheduler scheduler)
         {
             var listener = new
-               RepeatAfterCompletionJobListener(TimeSpan.FromSeconds(5));
+               RepeatAfterCompletionJobListener(2);
 
             scheduler.ListenerManager.AddJobListener
                      (listener, KeyMatcher<JobKey>.KeyEquals(new JobKey("re", "group1")));
@@ -69,6 +74,38 @@ namespace qtz_test
                             .Build();
 
             await scheduler.ScheduleJob(job, trigger);
+        }
+
+        public async Task ScheduleManyJobs(IScheduler scheduler)
+        {
+            var jobCount = 10000;
+            var maxRunCount = 2;
+
+            scheduler
+                .ListenerManager
+                .AddJobListener(new RepeatAfterCompletionJobListener(maxRunCount), GroupMatcher<JobKey>.GroupEquals("loadgroup"));
+
+            Console.Out.WriteLine($"---- {DateTime.Now} Job count: {jobCount}");
+            Console.Out.WriteLine($"---- {DateTime.Now} Max run count: {maxRunCount}");
+            Console.Out.WriteLine($"---- {DateTime.Now} Started scheduling {jobCount} jobs");
+
+            for (int i = 0; i < jobCount; i++)
+            {
+
+                var job = JobBuilder.Create<SimpleJob>()
+                                .WithIdentity("loadjob" + i, "loadgroup")
+                                .Build();
+
+                var trigger = TriggerBuilder.Create()
+                                .WithIdentity("loadtrigger" + i, "loadgroup")
+                                .UsingJobData("count", 1)
+                                .StartNow()
+                                .Build();
+
+                await scheduler.ScheduleJob(job, trigger);
+            }
+
+            Console.Out.WriteLine($"---- {DateTime.Now} Finished scheduling");
         }
     }
 }

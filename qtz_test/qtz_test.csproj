@@ -15,4 +15,7 @@
     <PackageReference Include="Quartz" Version="3.1.0" />
     <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.1.0" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Startup.cs" />
+  </ItemGroup>
 </Project>

@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Specialized;
 using System.Threading.Tasks;
 using Quartz;
 using Quartz.Impl;
+using Quartz.Simpl;
 
 namespace qtz_test
 {
@@ -9,10 +11,12 @@ namespace qtz_test
     {
         static async Task Main(string[] args)
         {
-            Console.WriteLine("Starting up");
+            Console.WriteLine($"---- {DateTime.Now} App started");
 
             // construct a scheduler factory
-            var factory = new StdSchedulerFactory();
+            var settings = new NameValueCollection();
+            settings.Add("quartz.threadPool.maxConcurrency", "10");
+            var factory = new StdSchedulerFactory(settings);
 
             // get a scheduler
             var scheduler = await factory.GetScheduler();
@@ -24,7 +28,9 @@ namespace qtz_test
 
             //await jobRunner.TryScheduleAJobTwice(scheduler);
 
-            await jobRunner.ScheduleAfterDelay(scheduler);
+            //await jobRunner.ScheduleAfterDelay(scheduler);
+
+            await jobRunner.ScheduleManyJobs(scheduler);
 
             Console.ReadLine();
 

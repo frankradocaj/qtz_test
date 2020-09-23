@@ -8,11 +8,11 @@ namespace qtz_test
     {
         public async Task Execute(IJobExecutionContext context)
         {
-            await Console.Out.WriteLineAsync($"'{context.JobDetail.Key.Name}' is executing");
+            //await Console.Out.WriteLineAsync($"'{context.JobDetail.Key.Name}' is executing");
 
-            await Task.Delay(TimeSpan.FromSeconds(10));
+            await Task.Delay(TimeSpan.FromSeconds(2));
 
-            await Console.Out.WriteLineAsync($"'{context.JobDetail.Key.Name}' is bailing");
+            //await Console.Out.WriteLineAsync($"'{context.JobDetail.Key.Name}' is bailing");
         }
     }
 }
